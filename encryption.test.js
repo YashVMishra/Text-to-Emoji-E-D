@@ -12,7 +12,7 @@ beforeAll(() => {
 });
 
 test('checks if the page title is correct', () => {
-    expect(document.title).toBe('Text to Enojis E/D');
+    expect(document.title).toBe('Text to Enojis');
 });
 
 test('checks if the main heading exists', () => {
