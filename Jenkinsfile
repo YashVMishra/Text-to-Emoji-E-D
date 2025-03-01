@@ -74,42 +74,29 @@ pipeline {
             }
         }
 
-        stage('Trigger AWS Lambda Deployment') {
+        stage('Deploy to Production') {
             steps {
                 script {
-                    echo "Triggering AWS Lambda function to pull the latest image..."
-                    sh """
-                    curl -X POST "${AWS_LAMBDA_API}" \
-                    -H "Content-Type: application/json" \
-                    -d '{}'
-                    """
+                    def runningContainer = sh(script: "docker ps -q --filter ancestor=${DOCKER_REPO}:latest", returnStdout: true).trim()
+
+                    if (runningContainer) {
+                        echo "Stopping and removing the existing container: ${runningContainer}"
+                        sh "docker stop ${runningContainer}"
+                        sh "docker rm ${runningContainer}"
+                    }
+
+                    def existingNamedContainer = sh(script: "docker ps -aq -f name=dev-ops-proj-container", returnStdout: true).trim()
+
+                    if (existingNamedContainer) {
+                        echo "Removing existing container 'dev-ops-proj-container'."
+                        sh "docker rm -f ${existingNamedContainer}"
+                    }
+
+                    echo "Deploying new container from image: ${DOCKER_REPO}:latest"
+                    sh "docker run -d -p 3000:3000 --name dev-ops-proj-container ${DOCKER_REPO}:latest"
                 }
             }
         }
-
-        // stage('Deploy to Production') {
-        //     steps {
-        //         script {
-        //             def runningContainer = sh(script: "docker ps -q --filter ancestor=${DOCKER_REPO}:latest", returnStdout: true).trim()
-
-        //             if (runningContainer) {
-        //                 echo "Stopping and removing the existing container: ${runningContainer}"
-        //                 sh "docker stop ${runningContainer}"
-        //                 sh "docker rm ${runningContainer}"
-        //             }
-
-        //             def existingNamedContainer = sh(script: "docker ps -aq -f name=dev-ops-proj-container", returnStdout: true).trim()
-
-        //             if (existingNamedContainer) {
-        //                 echo "Removing existing container 'dev-ops-proj-container'."
-        //                 sh "docker rm -f ${existingNamedContainer}"
-        //             }
-
-        //             echo "Deploying new container from image: ${DOCKER_REPO}:latest"
-        //             sh "docker run -d -p 3000:3000 --name dev-ops-proj-container ${DOCKER_REPO}:latest"
-        //         }
-        //     }
-        // }
 
     }
 
