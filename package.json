@@ -9,5 +9,8 @@
   },
   "jest": {
     "testEnvironment": "jsdom"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1692.0"
   }
 }

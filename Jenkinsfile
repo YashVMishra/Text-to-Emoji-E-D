@@ -7,6 +7,7 @@ pipeline {
         DOCKER_REPO = 'vardhan1125/text-emoji'  // Updated Docker Hub repo
         DOCKERFILE_PATH = './Dockerfile'
         PATH = "/usr/local/bin:$PATH"
+        AWS_LAMBDA_API = 'https://zftkby3wv6.execute-api.eu-north-1.amazonaws.com/update-lambda-image'  // Replace with actual API Gateway URL
     }
 
     stages {
@@ -69,6 +70,19 @@ pipeline {
                     echo "Tagging and pushing Docker image..."
                     sh "docker tag ${DOCKER_IMAGE} ${DOCKER_REPO}:latest"
                     sh "docker push ${DOCKER_REPO}:latest"
+                }
+            }
+        }
+
+        stage('Trigger AWS Lambda Deployment') {
+            steps {
+                script {
+                    echo "Triggering AWS Lambda function to pull the latest image..."
+                    sh """
+                    curl -X POST "${AWS_LAMBDA_API}" \
+                    -H "Content-Type: application/json" \
+                    -d '{}'
+                    """
                 }
             }
         }
