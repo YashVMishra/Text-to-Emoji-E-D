@@ -1,5 +1,4 @@
 pipeline {
-
     agent any
 
     environment {
@@ -7,8 +6,7 @@ pipeline {
         DOCKER_REPO = 'vardhan1125/text-emoji' // Replace with your Docker Hub repo
         DOCKERFILE_PATH = './Dockerfile'
         PATH = "/usr/local/bin:$PATH"
-        RENDER_SERVICE_ID = 'your-render-service-id' // Replace with your Render service ID
-        RENDER_API_KEY = 'your-render-api-key' // Replace with your Render API key
+        RENDER_DEPLOY_HOOK = 'https://api.render.com/deploy/srv-cv20m19u0jms738ototg?key=19Bu-MMv1HA' // Replace with your actual Render Deploy Hook URL
     }
 
     stages {
@@ -52,7 +50,6 @@ pipeline {
             }
         }
 
-
         stage('Push to Docker Hub') {
             steps {
                 script {
@@ -72,41 +69,37 @@ pipeline {
             steps {
                 script {
                     def runningContainer = sh(script: "docker ps -q --filter ancestor=${DOCKER_REPO}:latest", returnStdout: true).trim()
-
+ 
                     if (runningContainer) {
                         echo "Stopping and removing the existing container: ${runningContainer}"
                         sh "docker stop ${runningContainer}"
                         sh "docker rm ${runningContainer}"
                     }
-
+ 
                     def existingNamedContainer = sh(script: "docker ps -aq -f name=dev-ops-proj-container", returnStdout: true).trim()
-
+ 
                     if (existingNamedContainer) {
                         echo "Removing existing container 'dev-ops-proj-container'."
                         sh "docker rm -f ${existingNamedContainer}"
                     }
-
+ 
                     echo "Deploying new container from image: ${DOCKER_REPO}:latest"
                     sh "docker run -d -p 3000:3000 --name dev-ops-proj-container ${DOCKER_REPO}:latest"
                 }
             }
         }
+    
 
-        // stage('Trigger Render Deployment') {
-        //     steps {
-        //         script {
-        //             echo "Triggering deployment on Render..."
-        //             sh """
-        //             curl -X POST "https://api.render.com/v1/services/${RENDER_SERVICE_ID}/deploys" \\
-        //                 -H "Accept: application/json" \\
-        //                 -H "Authorization: Bearer ${RENDER_API_KEY}" \\
-        //                 -H "Content-Type: application/json" \\
-        //                 -d '{}'
-        //             """
-        //         }
-        //     }
-        // }
-
+        stage('Trigger Render Deployment') {
+            steps {
+                script {
+                    echo "Triggering deployment on Render..."
+                    sh """
+                    curl -X POST "${RENDER_DEPLOY_HOOK}"
+                    """
+                }
+            }
+        }
     }
 
     post {
@@ -118,5 +111,4 @@ pipeline {
             echo 'Build Failed!'
         }
     }
-
 }
