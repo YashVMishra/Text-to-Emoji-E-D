@@ -65,7 +65,7 @@ pipeline {
             }
         }
 
-        stage('Deploy to Production') {
+        stage('Deploy to LocalHost') {
             steps {
                 script {
                     def runningContainer = sh(script: "docker ps -q --filter ancestor=${DOCKER_REPO}:latest", returnStdout: true).trim()
